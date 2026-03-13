@@ -1,0 +1,41 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "polaris-news"
+version = "0.2.0"
+description = "Official Python SDK for The Polaris Report API"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.8"
+authors = [
+    { name = "The Polaris Report", email = "dev@thepolarisreport.com" },
+]
+keywords = ["polaris", "news", "api", "sdk"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "requests>=2.20",
+]
+
+[project.optional-dependencies]
+async = ["httpx>=0.24"]
+
+[project.urls]
+Homepage = "https://thepolarisreport.com"
+Documentation = "https://thepolarisreport.com/docs"
+Repository = "https://github.com/JohnnyTarrr/polaris-sdks"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

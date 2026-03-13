@@ -1,0 +1,48 @@
+{
+  "name": "polaris-news-api",
+  "version": "0.2.0",
+  "description": "Official TypeScript SDK for The Polaris Report API",
+  "type": "module",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build:esm": "tsc -p tsconfig.esm.json",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build": "npm run build:esm && npm run build:cjs",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "polaris",
+    "news",
+    "api",
+    "sdk"
+  ],
+  "author": "The Polaris Report",
+  "license": "MIT",
+  "homepage": "https://thepolarisreport.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/polaris-news/polaris-sdks"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "vitest": "^3.0.0"
+  }
+}

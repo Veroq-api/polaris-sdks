@@ -1,0 +1,33 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "langchain-polaris"
+version = "0.1.0"
+description = "LangChain integration for The Polaris Report — verified news intelligence tools and retriever"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.9"
+authors = [
+    { name = "The Polaris Report", email = "dev@thepolarisreport.com" },
+]
+keywords = ["langchain", "polaris", "news", "ai", "agents", "tools", "retriever"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+    "langchain-core>=0.1.0",
+    "polaris-news>=0.2.0",
+]
+
+[project.urls]
+Homepage = "https://thepolarisreport.com"
+Documentation = "https://thepolarisreport.com/docs"
+Repository = "https://github.com/JohnnyTarrr/polaris-sdks"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
