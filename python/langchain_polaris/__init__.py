@@ -4,6 +4,7 @@ from .tools import (
     PolarisEntityTool,
     PolarisExtractTool,
     PolarisFeedTool,
+    PolarisResearchTool,
     PolarisSearchTool,
 )
 from .retrievers import PolarisRetriever
@@ -14,6 +15,7 @@ __all__ = [
     "PolarisEntityTool",
     "PolarisBriefTool",
     "PolarisExtractTool",
+    "PolarisResearchTool",
     "PolarisCompareTool",
     "PolarisRetriever",
 ]

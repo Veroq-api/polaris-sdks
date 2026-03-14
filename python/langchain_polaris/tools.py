@@ -153,6 +153,51 @@ class PolarisExtractTool(BaseTool):
         return "\n".join(lines)
 
 
+class ResearchInput(BaseModel):
+    query: str = Field(description="Research query to investigate across intelligence briefs")
+    category: Optional[str] = Field(default=None, description="Category slug to filter briefs (e.g. ai_ml, policy, markets)")
+    max_sources: Optional[int] = Field(default=None, description="Maximum briefs to analyze (1-50, default: 20)")
+
+
+class PolarisResearchTool(BaseTool):
+    name: str = "polaris_research"
+    description: str = "Deep research across verified intelligence briefs. Expands a query into sub-queries, searches in parallel, aggregates entities, and synthesizes a comprehensive report with key findings and information gaps. Requires Growth plan. Costs 5 API credits."
+    args_schema: Type[BaseModel] = ResearchInput
+    api_key: str = ""
+
+    def __init__(self, api_key: str, **kwargs):
+        super().__init__(api_key=api_key, **kwargs)
+
+    def _run(self, query: str, category: str = None, max_sources: int = None) -> str:
+        client = PolarisClient(api_key=self.api_key)
+        result = client.research(query, category=category, max_sources=max_sources)
+        lines = []
+        if result.report:
+            summary = result.report.get("summary", "")
+            if summary:
+                lines.append("Summary: {}".format(summary[:500]))
+            findings = result.report.get("key_findings", [])
+            if findings:
+                lines.append("Key Findings:")
+                for f in findings[:10]:
+                    lines.append("- {}".format(f))
+            gaps = result.report.get("information_gaps", [])
+            if gaps:
+                lines.append("Information Gaps:")
+                for g in gaps[:5]:
+                    lines.append("- {}".format(g))
+        if result.entity_map:
+            lines.append("Top Entities:")
+            for e in result.entity_map[:5]:
+                lines.append("- {} ({}, {} mentions)".format(e.name, e.type or "N/A", e.mentions or 0))
+        if result.metadata:
+            lines.append("Analyzed {} briefs from {} sources in {}ms".format(
+                result.metadata.briefs_analyzed, result.metadata.unique_sources, result.metadata.processing_time_ms or 0))
+        if not lines:
+            return "No results found for research query '{}'.".format(query)
+        return "\n".join(lines)
+
+
 class CompareInput(BaseModel):
     topic: str = Field(description="Topic to compare coverage across outlets")
 

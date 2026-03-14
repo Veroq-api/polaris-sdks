@@ -23,6 +23,8 @@ import type {
   FeedOptions,
   FeedResponse,
   PolarisClientOptions,
+  ResearchOptions,
+  ResearchResponse,
   SearchOptions,
   SearchResponse,
   SimilarOptions,
@@ -219,6 +221,48 @@ export class PolarisClient {
       sourceAnalyses: data.source_analyses as ComparisonResponse["sourceAnalyses"],
       polarisAnalysis: data.polaris_analysis as string | undefined,
       generatedAt: data.generated_at as string | undefined,
+    };
+  }
+
+  async research(query: string, options: ResearchOptions = {}): Promise<ResearchResponse> {
+    const body: Record<string, unknown> = { query };
+    if (options.maxSources !== undefined) body.max_sources = options.maxSources;
+    if (options.depth !== undefined) body.depth = options.depth;
+    if (options.category !== undefined) body.category = options.category;
+    if (options.includeSources !== undefined) body.include_sources = options.includeSources;
+    if (options.excludeSources !== undefined) body.exclude_sources = options.excludeSources;
+    if (options.outputSchema !== undefined) body.output_schema = options.outputSchema;
+    const data = await this.request<Record<string, unknown>>("POST", "/api/v1/research", undefined, body);
+    const sourcesUsed = (data.sources_used as Record<string, unknown>[] || []).map((s) => ({
+      briefId: s.brief_id as string | undefined,
+      headline: s.headline as string | undefined,
+      confidence: s.confidence as number | undefined,
+      category: s.category as string | undefined,
+    }));
+    const entityMap = (data.entity_map as Record<string, unknown>[] || []).map((e) => ({
+      name: e.name as string | undefined,
+      type: e.type as string | undefined,
+      mentions: e.mentions as number | undefined,
+      coOccursWith: (e.co_occurs_with as Record<string, unknown>[] || []).map((c) => ({
+        entity: c.entity as string | undefined,
+        count: c.count as number | undefined,
+      })),
+    }));
+    const meta = data.metadata as Record<string, unknown> | undefined;
+    return {
+      query: data.query as string,
+      report: data.report as Record<string, unknown> | undefined,
+      sourcesUsed,
+      entityMap,
+      subQueries: data.sub_queries as string[] | undefined,
+      metadata: meta ? {
+        briefsAnalyzed: (meta.briefs_analyzed || 0) as number,
+        uniqueSources: (meta.unique_sources || 0) as number,
+        processingTimeMs: meta.processing_time_ms as number | undefined,
+        modelsUsed: meta.models_used as string[] | undefined,
+      } : undefined,
+      structuredOutput: data.structured_output,
+      structuredOutputError: data.structured_output_error as string | undefined,
     };
   }
 

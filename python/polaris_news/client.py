@@ -11,6 +11,7 @@ from .types import (
     EntitiesResponse,
     ExtractResponse,
     FeedResponse,
+    ResearchResponse,
     SearchResponse,
     _parse_brief,
     _parse_cluster,
@@ -18,6 +19,7 @@ from .types import (
     _parse_depth_metadata,
     _parse_entity,
     _parse_extract_result,
+    _parse_research_response,
     _parse_source_analysis,
 )
 
@@ -268,6 +270,25 @@ class PolarisClient:
             results=[_parse_extract_result(r) for r in data.get("results", [])],
             credits_used=data.get("credits_used", 0),
         )
+
+    def research(self, query, max_sources=None, depth=None, category=None,
+                 include_sources=None, exclude_sources=None, output_schema=None):
+        """Run deep research on a topic. Requires Growth plan or above. Costs 5 API credits."""
+        body = {"query": query}
+        if max_sources is not None:
+            body["max_sources"] = max_sources
+        if depth is not None:
+            body["depth"] = depth
+        if category is not None:
+            body["category"] = category
+        if include_sources is not None:
+            body["include_sources"] = include_sources
+        if exclude_sources is not None:
+            body["exclude_sources"] = exclude_sources
+        if output_schema is not None:
+            body["output_schema"] = output_schema
+        data = self._request("POST", "/api/v1/research", json_body=body)
+        return _parse_research_response(data)
 
     def trending(self, period=None, limit=None):
         """Get trending briefs."""

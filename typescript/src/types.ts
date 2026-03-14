@@ -237,6 +237,52 @@ export interface StreamOptions {
   categories?: string;
 }
 
+export interface ResearchOptions {
+  maxSources?: number;
+  depth?: string;
+  category?: string;
+  includeSources?: string;
+  excludeSources?: string;
+  outputSchema?: Record<string, unknown>;
+}
+
+export interface ResearchSourceUsed {
+  briefId?: string;
+  headline?: string;
+  confidence?: number;
+  category?: string;
+}
+
+export interface ResearchEntityCooccurrence {
+  entity?: string;
+  count?: number;
+}
+
+export interface ResearchEntity {
+  name?: string;
+  type?: string;
+  mentions?: number;
+  coOccursWith?: ResearchEntityCooccurrence[];
+}
+
+export interface ResearchMetadata {
+  briefsAnalyzed: number;
+  uniqueSources: number;
+  processingTimeMs?: number;
+  modelsUsed?: string[];
+}
+
+export interface ResearchResponse {
+  query: string;
+  report?: Record<string, unknown>;
+  sourcesUsed?: ResearchSourceUsed[];
+  entityMap?: ResearchEntity[];
+  subQueries?: string[];
+  metadata?: ResearchMetadata;
+  structuredOutput?: unknown;
+  structuredOutputError?: string;
+}
+
 export interface PolarisClientOptions {
   apiKey?: string;
   baseUrl?: string;

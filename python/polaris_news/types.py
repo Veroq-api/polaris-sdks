@@ -186,6 +186,90 @@ class ComparisonResponse:
     generated_at: Optional[str] = None
 
 
+@dataclass
+class ResearchSourceUsed:
+    brief_id: Optional[str] = None
+    headline: Optional[str] = None
+    confidence: Optional[float] = None
+    category: Optional[str] = None
+
+
+@dataclass
+class ResearchEntityCooccurrence:
+    entity: Optional[str] = None
+    count: Optional[int] = None
+
+
+@dataclass
+class ResearchEntity:
+    name: Optional[str] = None
+    type: Optional[str] = None
+    mentions: Optional[int] = None
+    co_occurs_with: Optional[List["ResearchEntityCooccurrence"]] = None
+
+
+@dataclass
+class ResearchMetadata:
+    briefs_analyzed: int = 0
+    unique_sources: int = 0
+    processing_time_ms: Optional[int] = None
+    models_used: Optional[List[str]] = None
+
+
+@dataclass
+class ResearchResponse:
+    query: str = ""
+    report: Optional[Dict[str, Any]] = None
+    sources_used: Optional[List[ResearchSourceUsed]] = None
+    entity_map: Optional[List[ResearchEntity]] = None
+    sub_queries: Optional[List[str]] = None
+    metadata: Optional[ResearchMetadata] = None
+    structured_output: Optional[Any] = None
+    structured_output_error: Optional[str] = None
+
+
+def _parse_research_entity(data):
+    if not isinstance(data, dict):
+        return ResearchEntity()
+    coocs = data.get("co_occurs_with")
+    parsed_coocs = None
+    if isinstance(coocs, list):
+        parsed_coocs = [ResearchEntityCooccurrence(**{k: v for k, v in c.items() if k in ResearchEntityCooccurrence.__dataclass_fields__}) for c in coocs if isinstance(c, dict)]
+    return ResearchEntity(
+        name=data.get("name"),
+        type=data.get("type"),
+        mentions=data.get("mentions"),
+        co_occurs_with=parsed_coocs,
+    )
+
+
+def _parse_research_response(data):
+    if not isinstance(data, dict):
+        return ResearchResponse()
+    sources = data.get("sources_used")
+    parsed_sources = None
+    if isinstance(sources, list):
+        parsed_sources = [ResearchSourceUsed(**{k: v for k, v in s.items() if k in ResearchSourceUsed.__dataclass_fields__}) for s in sources if isinstance(s, dict)]
+    entities = data.get("entity_map")
+    parsed_entities = None
+    if isinstance(entities, list):
+        parsed_entities = [_parse_research_entity(e) for e in entities]
+    meta = data.get("metadata")
+    parsed_meta = None
+    if isinstance(meta, dict):
+        parsed_meta = ResearchMetadata(**{k: v for k, v in meta.items() if k in ResearchMetadata.__dataclass_fields__})
+    return ResearchResponse(
+        query=data.get("query", ""),
+        report=data.get("report"),
+        sources_used=parsed_sources,
+        entity_map=parsed_entities,
+        sub_queries=data.get("sub_queries"),
+        metadata=parsed_meta,
+        structured_output=data.get("structured_output"),
+        structured_output_error=data.get("structured_output_error"),
+    )
+
+
 def _parse_source(data):
     if isinstance(data, dict):
         return Source(**{k: v for k, v in data.items() if k in Source.__dataclass_fields__})
