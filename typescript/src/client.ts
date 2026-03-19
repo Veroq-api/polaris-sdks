@@ -221,14 +221,15 @@ export class PolarisClient {
       delete params.limit;
     }
     const data = await this.request<Record<string, unknown>>("GET", "/api/v1/feed", params);
+    const meta = (data.meta || {}) as Record<string, unknown>;
     return {
       briefs: ((data.briefs || []) as Record<string, unknown>[]).map(parseBrief),
-      total: (data.total || 0) as number,
-      page: (data.page || 1) as number,
-      perPage: (data.per_page || 20) as number,
+      total: (meta.total || data.total || 0) as number,
+      page: (meta.page || data.page || 1) as number,
+      perPage: (meta.per_page || data.per_page || 20) as number,
       generatedAt: data.generated_at as string | undefined,
       agentVersion: data.agent_version as string | undefined,
-      sourcesScanned24h: data.sources_scanned_24h as number | undefined,
+      sourcesScanned24h: (meta.sources_scanned_24h || data.sources_scanned_24h) as number | undefined,
     };
   }
 

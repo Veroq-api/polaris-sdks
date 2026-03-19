@@ -100,14 +100,15 @@ class PolarisClient:
         if exclude_sources is not None:
             params["exclude_sources"] = exclude_sources
         data = self._request("GET", "/api/v1/feed", params=params)
+        meta = data.get("meta", {})
         return FeedResponse(
             briefs=[_parse_brief(b) for b in data.get("briefs", [])],
-            total=data.get("total", 0),
-            page=data.get("page", 1),
-            per_page=data.get("per_page", 20),
+            total=meta.get("total", data.get("total", 0)),
+            page=meta.get("page", data.get("page", 1)),
+            per_page=meta.get("per_page", data.get("per_page", 20)),
             generated_at=data.get("generated_at"),
             agent_version=data.get("agent_version"),
-            sources_scanned_24h=data.get("sources_scanned_24h"),
+            sources_scanned_24h=meta.get("sources_scanned_24h", data.get("sources_scanned_24h")),
         )
 
     def brief(self, brief_id, include_full_text=None):
