@@ -5,7 +5,7 @@ import { PolarisClient } from "polaris-news-api";
 export const polarisSearch = (options: { apiKey?: string } = {}) =>
   tool({
     description:
-      "Search verified news briefs with confidence scores and bias ratings across 18 verticals.",
+      "Search verified intelligence briefs with confidence scores and bias ratings across 18 verticals.",
     parameters: z.object({
       query: z.string().describe("The search query"),
       category: z

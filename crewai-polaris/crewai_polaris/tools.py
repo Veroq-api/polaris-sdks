@@ -7,14 +7,14 @@ from polaris_news import PolarisClient
 
 
 class SearchInput(BaseModel):
-    query: str = Field(description="Search query for news intelligence")
+    query: str = Field(description="Search query for verified intelligence")
     category: Optional[str] = Field(default=None, description="Category slug (e.g. ai_ml, markets, crypto)")
     depth: Optional[str] = Field(default=None, description="Speed tier: fast, standard, or deep")
 
 
 class PolarisSearchTool(BaseTool):
     name: str = "polaris_search"
-    description: str = "Search verified news intelligence across 18 verticals. Returns briefs with confidence scores and bias ratings."
+    description: str = "Search verified intelligence across 18 verticals. Returns briefs with confidence scores and bias ratings."
     args_schema: Type[BaseModel] = SearchInput
     api_key: str = ""
 
@@ -46,7 +46,7 @@ class FeedInput(BaseModel):
 
 class PolarisFeedTool(BaseTool):
     name: str = "polaris_feed"
-    description: str = "Get latest verified news briefs, optionally filtered by category or source domain."
+    description: str = "Get latest verified intelligence briefs, optionally filtered by category or source domain."
     args_schema: Type[BaseModel] = FeedInput
     api_key: str = ""
 
@@ -72,7 +72,7 @@ class EntityInput(BaseModel):
 
 class PolarisEntityTool(BaseTool):
     name: str = "polaris_entities"
-    description: str = "Look up entities (companies, people, technologies) mentioned in verified news coverage."
+    description: str = "Look up entities (companies, people, technologies) mentioned in verified intelligence coverage."
     args_schema: Type[BaseModel] = EntityInput
     api_key: str = ""
 
@@ -97,7 +97,7 @@ class BriefInput(BaseModel):
 
 class PolarisBriefTool(BaseTool):
     name: str = "polaris_brief"
-    description: str = "Get a specific verified news brief by ID with full analysis, sources, and counter-arguments."
+    description: str = "Get a specific verified intelligence brief by ID with full analysis, sources, and counter-arguments."
     args_schema: Type[BaseModel] = BriefInput
     api_key: str = ""
 
@@ -239,7 +239,7 @@ class CompareInput(BaseModel):
 
 class PolarisCompareTool(BaseTool):
     name: str = "polaris_compare"
-    description: str = "Compare how different news outlets covered the same story. Shows framing, bias, and what each side emphasizes or omits."
+    description: str = "Compare how different outlets covered the same story. Shows framing, bias, and what each side emphasizes or omits."
     args_schema: Type[BaseModel] = CompareInput
     api_key: str = ""
 
@@ -274,7 +274,7 @@ class TrendingInput(BaseModel):
 
 class PolarisTrendingTool(BaseTool):
     name: str = "polaris_trending"
-    description: str = "Get trending entities across the news — the people, companies, and topics generating the most coverage right now."
+    description: str = "Get trending entities across the intelligence network — the people, companies, and topics generating the most coverage right now."
     args_schema: Type[BaseModel] = TrendingInput
     api_key: str = ""
 

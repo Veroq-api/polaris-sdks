@@ -5,7 +5,7 @@ import { PolarisClient } from "polaris-news-api";
 export const polarisFeed = (options: { apiKey?: string } = {}) =>
   tool({
     description:
-      "Get the latest verified news briefs from the Polaris intelligence feed, optionally filtered by category.",
+      "Get the latest verified intelligence briefs from the Polaris knowledge feed, optionally filtered by category.",
     parameters: z.object({
       category: z
         .string()

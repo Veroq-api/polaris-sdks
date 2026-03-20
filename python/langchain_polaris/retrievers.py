@@ -7,7 +7,7 @@ from polaris_news import PolarisClient
 
 
 class PolarisRetriever(BaseRetriever):
-    """LangChain retriever that searches Polaris verified news intelligence."""
+    """LangChain retriever that searches Polaris verified intelligence."""
 
     api_key: str = ""
     category: Optional[str] = None
