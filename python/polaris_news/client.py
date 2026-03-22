@@ -458,3 +458,58 @@ class PolarisClient:
                         yield _parse_brief(data)
                     except (json.JSONDecodeError, TypeError):
                         continue
+
+    # ── Trading ──
+
+    def ticker_resolve(self, symbols):
+        """Resolve ticker symbols to canonical entities."""
+        params = {"q": symbols}
+        return self._request("GET", "/api/v1/ticker/resolve", params=params)
+
+    def ticker(self, symbol):
+        """Get ticker overview for a symbol."""
+        return self._request("GET", "/api/v1/ticker/{}".format(symbol))
+
+    def ticker_history(self, symbol, days=30):
+        """Get sentiment history for a ticker."""
+        params = {"days": days}
+        return self._request("GET", "/api/v1/ticker/{}/history".format(symbol), params=params)
+
+    def ticker_signals(self, symbol, days=30, threshold=0.3):
+        """Get trading signals for a ticker."""
+        params = {"days": days, "threshold": threshold}
+        return self._request("GET", "/api/v1/ticker/{}/signals".format(symbol), params=params)
+
+    def ticker_correlations(self, symbol, days=30, limit=15):
+        """Get news-sentiment correlations for a ticker."""
+        params = {"days": days, "limit": limit}
+        return self._request("GET", "/api/v1/ticker/{}/correlations".format(symbol), params=params)
+
+    def ticker_score(self, symbol):
+        """Get composite trading score for a ticker."""
+        return self._request("GET", "/api/v1/ticker/{}/score".format(symbol))
+
+    def sectors(self, days=7):
+        """Get sector-level sentiment overview."""
+        params = {"days": days}
+        return self._request("GET", "/api/v1/sectors", params=params)
+
+    def sector_tickers(self, sector, days=7, sort='sentiment'):
+        """Get tickers within a sector."""
+        params = {"days": days, "sort": sort}
+        return self._request("GET", "/api/v1/sectors/{}/tickers".format(sector), params=params)
+
+    def events_calendar(self, days=30, ticker=None, type=None, limit=50):
+        """Get upcoming market events calendar."""
+        params = {"days": days, "limit": limit}
+        if ticker is not None:
+            params["ticker"] = ticker
+        if type is not None:
+            params["type"] = type
+        return self._request("GET", "/api/v1/events/calendar", params=params)
+
+    def portfolio_feed(self, holdings, days=7, limit=30):
+        """Get a personalized feed for a portfolio of holdings."""
+        body = {"holdings": holdings}
+        params = {"days": days, "limit": limit}
+        return self._request("POST", "/api/v1/portfolio/feed", params=params, json_body=body)

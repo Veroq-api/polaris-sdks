@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "polaris-news"
-version = "0.4.0"
+version = "0.4.1"
 description = "Official Python SDK for The Polaris Report API"
 readme = "README.md"
 license = "MIT"

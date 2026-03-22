@@ -318,3 +318,153 @@ export interface PolarisClientOptions {
   apiKey?: string;
   baseUrl?: string;
 }
+
+// ── Trading ──
+
+export interface TickerResolveResult {
+  symbol: string;
+  name?: string;
+  sector?: string;
+  found: boolean;
+}
+
+export interface TickerResolveResponse {
+  tickers: TickerResolveResult[];
+}
+
+export interface TickerResponse {
+  symbol: string;
+  name?: string;
+  sector?: string;
+  sentiment?: string;
+  sentimentScore?: number;
+  briefCount?: number;
+  lastMentioned?: string;
+}
+
+export interface TickerHistoryPoint {
+  date: string;
+  sentimentScore?: number;
+  briefCount?: number;
+  volume?: number;
+}
+
+export interface TickerHistoryOptions {
+  days?: number;
+}
+
+export interface TickerHistoryResponse {
+  symbol: string;
+  history: TickerHistoryPoint[];
+}
+
+export interface TickerSignal {
+  date: string;
+  type?: string;
+  direction?: string;
+  strength?: number;
+  description?: string;
+}
+
+export interface TickerSignalsOptions {
+  days?: number;
+  threshold?: number;
+}
+
+export interface TickerSignalsResponse {
+  symbol: string;
+  signals: TickerSignal[];
+}
+
+export interface TickerCorrelation {
+  symbol: string;
+  name?: string;
+  correlation?: number;
+  sharedBriefs?: number;
+}
+
+export interface TickerCorrelationsOptions {
+  days?: number;
+  limit?: number;
+}
+
+export interface TickerCorrelationsResponse {
+  symbol: string;
+  correlations: TickerCorrelation[];
+}
+
+export interface TickerScoreResponse {
+  symbol: string;
+  score?: number;
+  components?: Record<string, unknown>;
+  updatedAt?: string;
+}
+
+export interface SectorsOptions {
+  days?: number;
+}
+
+export interface SectorSummary {
+  sector: string;
+  sentiment?: string;
+  sentimentScore?: number;
+  briefCount?: number;
+  topTickers?: string[];
+}
+
+export interface SectorsResponse {
+  sectors: SectorSummary[];
+}
+
+export interface SectorTickersOptions {
+  days?: number;
+  sort?: "sentiment" | "briefs";
+}
+
+export interface SectorTicker {
+  symbol: string;
+  name?: string;
+  sentiment?: string;
+  sentimentScore?: number;
+  briefCount?: number;
+}
+
+export interface SectorTickersResponse {
+  sector: string;
+  tickers: SectorTicker[];
+}
+
+export interface EventsCalendarOptions {
+  days?: number;
+  ticker?: string;
+  type?: string;
+  limit?: number;
+}
+
+export interface CalendarEvent {
+  date: string;
+  type?: string;
+  title?: string;
+  ticker?: string;
+  description?: string;
+  impact?: string;
+}
+
+export interface EventsCalendarResponse {
+  events: CalendarEvent[];
+}
+
+export interface PortfolioHolding {
+  ticker: string;
+  weight: number;
+}
+
+export interface PortfolioFeedOptions {
+  days?: number;
+  limit?: number;
+}
+
+export interface PortfolioFeedResponse {
+  briefs: Brief[];
+  holdings: PortfolioHolding[];
+}

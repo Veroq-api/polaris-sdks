@@ -1,6 +1,6 @@
 {
   "name": "polaris-news-api",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Official TypeScript SDK for The Polaris Report API",
   "type": "module",
   "main": "./dist/cjs/index.js",

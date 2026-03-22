@@ -33,20 +33,38 @@ import type {
   EntitiesOptions,
   EntitiesResponse,
   EntityBriefsOptions,
+  EventsCalendarOptions,
+  EventsCalendarResponse,
   ExtractResponse,
   ExtractResult,
   FeedOptions,
   FeedResponse,
   PolarisClientOptions,
+  PortfolioFeedOptions,
+  PortfolioFeedResponse,
+  PortfolioHolding,
   Provenance,
   ResearchOptions,
   ResearchResponse,
   SearchOptions,
   SearchResponse,
+  SectorTickersOptions,
+  SectorTickersResponse,
+  SectorsOptions,
+  SectorsResponse,
   SimilarOptions,
   Source,
   SourceAnalysis,
   StreamOptions,
+  TickerCorrelationsOptions,
+  TickerCorrelationsResponse,
+  TickerHistoryOptions,
+  TickerHistoryResponse,
+  TickerResolveResponse,
+  TickerResponse,
+  TickerScoreResponse,
+  TickerSignalsOptions,
+  TickerSignalsResponse,
   TrendingOptions,
   VerifyOptions,
   VerifyResponse,
@@ -531,6 +549,56 @@ export class PolarisClient {
   async crawl(url: string, options?: { depth?: number; max_pages?: number; include_links?: boolean }): Promise<Record<string, unknown>> {
     const body: Record<string, unknown> = { url, ...options };
     return this.request<Record<string, unknown>>("POST", "/api/v1/crawl", undefined, body);
+  }
+
+  // ── Trading ──
+
+  async tickerResolve(symbols: string[]): Promise<TickerResolveResponse> {
+    const params: Record<string, unknown> = { q: symbols.join(",") };
+    return this.request<TickerResolveResponse>("GET", "/api/v1/ticker/resolve", params);
+  }
+
+  async ticker(symbol: string): Promise<TickerResponse> {
+    return this.request<TickerResponse>("GET", `/api/v1/ticker/${encodeURIComponent(symbol)}`);
+  }
+
+  async tickerHistory(symbol: string, options: TickerHistoryOptions = {}): Promise<TickerHistoryResponse> {
+    const params: Record<string, unknown> = { ...options };
+    return this.request<TickerHistoryResponse>("GET", `/api/v1/ticker/${encodeURIComponent(symbol)}/history`, params);
+  }
+
+  async tickerSignals(symbol: string, options: TickerSignalsOptions = {}): Promise<TickerSignalsResponse> {
+    const params: Record<string, unknown> = { ...options };
+    return this.request<TickerSignalsResponse>("GET", `/api/v1/ticker/${encodeURIComponent(symbol)}/signals`, params);
+  }
+
+  async tickerCorrelations(symbol: string, options: TickerCorrelationsOptions = {}): Promise<TickerCorrelationsResponse> {
+    const params: Record<string, unknown> = { ...options };
+    return this.request<TickerCorrelationsResponse>("GET", `/api/v1/ticker/${encodeURIComponent(symbol)}/correlations`, params);
+  }
+
+  async tickerScore(symbol: string): Promise<TickerScoreResponse> {
+    return this.request<TickerScoreResponse>("GET", `/api/v1/ticker/${encodeURIComponent(symbol)}/score`);
+  }
+
+  async sectors(options: SectorsOptions = {}): Promise<SectorsResponse> {
+    const params: Record<string, unknown> = { ...options };
+    return this.request<SectorsResponse>("GET", "/api/v1/sectors", params);
+  }
+
+  async sectorTickers(sector: string, options: SectorTickersOptions = {}): Promise<SectorTickersResponse> {
+    const params: Record<string, unknown> = { ...options };
+    return this.request<SectorTickersResponse>("GET", `/api/v1/sectors/${encodeURIComponent(sector)}/tickers`, params);
+  }
+
+  async eventsCalendar(options: EventsCalendarOptions = {}): Promise<EventsCalendarResponse> {
+    const params: Record<string, unknown> = { ...options };
+    return this.request<EventsCalendarResponse>("GET", "/api/v1/events/calendar", params);
+  }
+
+  async portfolioFeed(holdings: PortfolioHolding[], options: PortfolioFeedOptions = {}): Promise<PortfolioFeedResponse> {
+    const body: Record<string, unknown> = { holdings, ...options };
+    return this.request<PortfolioFeedResponse>("POST", "/api/v1/portfolio/feed", undefined, body);
   }
 
   stream(options: StreamOptions = {}): { start: (onBrief: (brief: Brief) => void, onError?: (error: Error) => void) => void; stop: () => void } {

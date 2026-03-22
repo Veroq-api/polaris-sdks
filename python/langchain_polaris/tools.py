@@ -1,4 +1,4 @@
-from typing import Optional, Type
+from typing import List, Optional, Type
 
 from langchain_core.tools import BaseTool
 from pydantic import BaseModel, Field
@@ -421,4 +421,274 @@ class PolarisTrendingTool(BaseTool):
         for e in entities:
             lines.append("- {} ({}, {} mentions)".format(
                 e.name, e.type or "N/A", e.mention_count or 0))
+        return "\n".join(lines)
+
+
+# ── Trading Tools ──
+
+
+class TickerResolveInput(BaseModel):
+    symbols: str = Field(description="Comma-separated ticker symbols to resolve (e.g. 'AAPL,MSFT,NVDA')")
+
+
+class PolarisTickerResolveTool(BaseTool):
+    name: str = "polaris_ticker_resolve"
+    description: str = "Resolve ticker symbols to canonical entities. Returns matched tickers with entity names, exchanges, asset types, and sectors. Unresolved symbols are listed separately."
+    args_schema: Type[BaseModel] = TickerResolveInput
+    api_key: str = ""
+
+    def __init__(self, api_key: str, **kwargs):
+        super().__init__(api_key=api_key, **kwargs)
+
+    def _run(self, symbols: str) -> str:
+        client = PolarisClient(api_key=self.api_key)
+        result = client.ticker_resolve(symbols)
+        resolved = result.get("resolved", [])
+        unresolved = result.get("unresolved", [])
+        lines = []
+        if resolved:
+            lines.append("Resolved tickers:")
+            for r in resolved:
+                lines.append("- {} → {} ({}, {}, sector: {})".format(
+                    r.get("ticker", "?"),
+                    r.get("entity_name", "?"),
+                    r.get("exchange", "N/A"),
+                    r.get("asset_type", "N/A"),
+                    r.get("sector", "N/A"),
+                ))
+        if unresolved:
+            lines.append("Unresolved: {}".format(", ".join(unresolved)))
+        if not lines:
+            return "No ticker symbols provided."
+        return "\n".join(lines)
+
+
+class TickerInput(BaseModel):
+    symbol: str = Field(description="Ticker symbol to look up (e.g. 'AAPL')")
+
+
+class PolarisTickerTool(BaseTool):
+    name: str = "polaris_ticker"
+    description: str = "Look up a single ticker symbol. Returns entity name, exchange, sector, 24h brief count, sentiment score, and trending status."
+    args_schema: Type[BaseModel] = TickerInput
+    api_key: str = ""
+
+    def __init__(self, api_key: str, **kwargs):
+        super().__init__(api_key=api_key, **kwargs)
+
+    def _run(self, symbol: str) -> str:
+        client = PolarisClient(api_key=self.api_key)
+        result = client.ticker(symbol)
+        if result.get("status") != "ok":
+            return "Ticker '{}' not found.".format(symbol)
+        lines = [
+            "{} — {}".format(result.get("ticker", symbol), result.get("entity_name", "Unknown")),
+            "Exchange: {} | Sector: {} | Type: {}".format(
+                result.get("exchange", "N/A"),
+                result.get("sector", "N/A"),
+                result.get("asset_type", "N/A"),
+            ),
+            "Briefs (24h): {} | Sentiment: {} | Trending: {}".format(
+                result.get("briefs_24h", 0),
+                result.get("sentiment_score", "N/A"),
+                result.get("trending", False),
+            ),
+        ]
+        return "\n".join(lines)
+
+
+class TickerScoreInput(BaseModel):
+    symbol: str = Field(description="Ticker symbol to get composite trading signal for (e.g. 'NVDA')")
+
+
+class PolarisTickerScoreTool(BaseTool):
+    name: str = "polaris_ticker_score"
+    description: str = "Get a composite trading signal score for a ticker. Combines sentiment (40%), momentum (25%), coverage volume (20%), and event proximity (15%) into a single score from -1 to +1 with a signal label (strong_bullish/bullish/neutral/bearish/strong_bearish)."
+    args_schema: Type[BaseModel] = TickerScoreInput
+    api_key: str = ""
+
+    def __init__(self, api_key: str, **kwargs):
+        super().__init__(api_key=api_key, **kwargs)
+
+    def _run(self, symbol: str) -> str:
+        client = PolarisClient(api_key=self.api_key)
+        result = client.ticker_score(symbol)
+        if result.get("status") != "ok":
+            return "Could not compute score for '{}'.".format(symbol)
+        lines = [
+            "{} — {} (score: {})".format(
+                result.get("ticker", symbol),
+                result.get("signal", "N/A"),
+                result.get("composite_score", "N/A"),
+            ),
+            "Entity: {} | Sector: {}".format(
+                result.get("entity_name", "N/A"),
+                result.get("sector", "N/A"),
+            ),
+        ]
+        components = result.get("components", {})
+        sentiment = components.get("sentiment", {})
+        lines.append("Sentiment: 24h={} / 7d avg={} (weight {})".format(
+            sentiment.get("current_24h", "N/A"),
+            sentiment.get("week_avg", "N/A"),
+            sentiment.get("weight", 0.4),
+        ))
+        mom = components.get("momentum", {})
+        lines.append("Momentum: {} ({}, weight {})".format(
+            mom.get("value", "N/A"),
+            mom.get("direction", "N/A"),
+            mom.get("weight", 0.25),
+        ))
+        vol = components.get("volume", {})
+        lines.append("Volume: {} briefs/day this week vs {} last week ({}% change, weight {})".format(
+            vol.get("daily_avg_this_week", "N/A"),
+            vol.get("daily_avg_last_week", "N/A"),
+            vol.get("velocity_change_pct", "N/A"),
+            vol.get("weight", 0.2),
+        ))
+        events = components.get("events", {})
+        lines.append("Events: {} in 7d, latest type: {} (weight {})".format(
+            events.get("count_7d", 0),
+            events.get("latest_type", "none"),
+            events.get("weight", 0.15),
+        ))
+        return "\n".join(lines)
+
+
+class SectorsInput(BaseModel):
+    days: Optional[int] = Field(default=None, description="Lookback period in days (1-90, default 7)")
+
+
+class PolarisSectorsTool(BaseTool):
+    name: str = "polaris_sectors"
+    description: str = "Get a sector-level overview of market sentiment. Returns each sector's ticker count, brief count, average sentiment, top ticker, and bullish/bearish/neutral signal."
+    args_schema: Type[BaseModel] = SectorsInput
+    api_key: str = ""
+
+    def __init__(self, api_key: str, **kwargs):
+        super().__init__(api_key=api_key, **kwargs)
+
+    def _run(self, days: int = None) -> str:
+        client = PolarisClient(api_key=self.api_key)
+        result = client.sectors(days=days or 7)
+        sectors = result.get("sectors", [])
+        if not sectors:
+            return "No sector data available."
+        lines = ["Sector overview ({} day lookback):".format(result.get("days", 7))]
+        for s in sectors:
+            lines.append("- {} [{}] sentiment={} | {} tickers, {} briefs | top: {}".format(
+                s.get("sector", "?"),
+                s.get("signal", "?"),
+                s.get("avg_sentiment", "N/A"),
+                s.get("ticker_count", 0),
+                s.get("brief_count", 0),
+                s.get("top_ticker", "N/A"),
+            ))
+        return "\n".join(lines)
+
+
+class PortfolioFeedInput(BaseModel):
+    holdings: str = Field(description="JSON array of holdings, e.g. '[{\"ticker\":\"NVDA\",\"weight\":0.3},{\"ticker\":\"AAPL\",\"weight\":0.2}]'")
+    days: Optional[int] = Field(default=None, description="Lookback period in days (1-30, default 7)")
+    limit: Optional[int] = Field(default=None, description="Max briefs to return (1-100, default 30)")
+
+
+class PolarisPortfolioFeedTool(BaseTool):
+    name: str = "polaris_portfolio_feed"
+    description: str = "Get ranked intelligence for a portfolio of holdings. Pass ticker/weight pairs and receive briefs scored by portfolio relevance, plus a per-holding summary with brief counts and sentiment."
+    args_schema: Type[BaseModel] = PortfolioFeedInput
+    api_key: str = ""
+
+    def __init__(self, api_key: str, **kwargs):
+        super().__init__(api_key=api_key, **kwargs)
+
+    def _run(self, holdings: str, days: int = None, limit: int = None) -> str:
+        import json as _json
+        try:
+            holdings_list = _json.loads(holdings)
+        except (_json.JSONDecodeError, TypeError):
+            return "Invalid holdings JSON. Expected format: [{\"ticker\":\"NVDA\",\"weight\":0.3}, ...]"
+        if not isinstance(holdings_list, list) or not holdings_list:
+            return "Holdings must be a non-empty JSON array of {\"ticker\": ..., \"weight\": ...} objects."
+        client = PolarisClient(api_key=self.api_key)
+        result = client.portfolio_feed(holdings_list, days=days or 7, limit=limit or 30)
+        lines = []
+        # Portfolio summary
+        summary = result.get("portfolio_summary", [])
+        if summary:
+            lines.append("Portfolio summary ({} holdings resolved):".format(result.get("holdings_resolved", 0)))
+            for h in summary:
+                lines.append("  {} (weight {}) — {} briefs, sentiment: {}".format(
+                    h.get("ticker", "?"),
+                    h.get("weight", "?"),
+                    h.get("briefs_in_period", 0),
+                    h.get("avg_sentiment", "N/A"),
+                ))
+        unresolved = result.get("holdings_unresolved", [])
+        if unresolved:
+            lines.append("Unresolved: {}".format(", ".join(unresolved)))
+        # Top briefs
+        briefs = result.get("briefs", [])
+        if briefs:
+            lines.append("Top briefs (by portfolio relevance):")
+            for b in briefs[:10]:
+                tickers = ", ".join(b.get("matching_tickers", []))
+                lines.append("- [{}] {} (relevance: {}, tickers: {})".format(
+                    b.get("category", "general"),
+                    b.get("headline", "Untitled"),
+                    b.get("portfolio_relevance", "N/A"),
+                    tickers or "N/A",
+                ))
+        if not lines:
+            return "No portfolio intelligence found."
+        return "\n".join(lines)
+
+
+class EventsCalendarInput(BaseModel):
+    ticker: Optional[str] = Field(default=None, description="Ticker symbol to filter events for (e.g. 'AAPL')")
+    type: Optional[str] = Field(default=None, description="Event type to filter by (e.g. 'earnings', 'product_launch')")
+    days: Optional[int] = Field(default=None, description="Lookback period in days (1-90, default 30)")
+    limit: Optional[int] = Field(default=None, description="Max events to return (1-200, default 50)")
+
+
+class PolarisEventsCalendarTool(BaseTool):
+    name: str = "polaris_events_calendar"
+    description: str = "Get structured market events from intelligence briefs, filterable by ticker and event type. Returns events with brief context, market session, and a summary breakdown by event type."
+    args_schema: Type[BaseModel] = EventsCalendarInput
+    api_key: str = ""
+
+    def __init__(self, api_key: str, **kwargs):
+        super().__init__(api_key=api_key, **kwargs)
+
+    def _run(self, ticker: str = None, type: str = None, days: int = None, limit: int = None) -> str:
+        client = PolarisClient(api_key=self.api_key)
+        result = client.events_calendar(
+            days=days or 30,
+            ticker=ticker,
+            type=type,
+            limit=limit or 50,
+        )
+        events = result.get("events", [])
+        event_types = result.get("event_types", [])
+        total = result.get("total_events", 0)
+        lines = ["Events calendar ({} total, {} day lookback{}{}):".format(
+            total,
+            result.get("days", 30),
+            ", ticker={}".format(result.get("ticker")) if result.get("ticker") else "",
+            ", type={}".format(result.get("event_type")) if result.get("event_type") else "",
+        )]
+        if event_types:
+            lines.append("By type: {}".format(
+                ", ".join("{} ({})".format(t.get("type", "?"), t.get("count", 0)) for t in event_types)
+            ))
+        if events:
+            for ev in events[:20]:
+                lines.append("- [{}] {} — {} (brief: {})".format(
+                    ev.get("event_type", "?"),
+                    ev.get("subject", "?"),
+                    ev.get("description", ev.get("brief_headline", "N/A")),
+                    ev.get("brief_id", "N/A"),
+                ))
+        elif total == 0:
+            lines.append("No events found.")
         return "\n".join(lines)
