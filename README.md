@@ -1,5 +1,10 @@
 # VEROQ SDKs + CLI
 
+[![License](https://img.shields.io/badge/license-MIT-2EE89A)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.9+-2EE89A)](https://python.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-2EE89A)](https://typescriptlang.org)
+[![VEROQ](https://img.shields.io/badge/powered%20by-VEROQ-2EE89A)](https://veroq.ai)
+
 **The truth protocol for agentic AI. Verified intelligence for agents that can't afford to be wrong.**
 
 Official SDKs, CLI, and framework integrations for [VEROQ](https://veroq.ai) — 1,061+ tickers, 20 technical indicators, NLP screener, trade signals, and verified intelligence.
