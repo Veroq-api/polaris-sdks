@@ -4,6 +4,7 @@ from .client import VeroqClient
 from .agent import Agent, AskResult, FullResult, SubscribeEvent
 from .exceptions import APIError, AuthenticationError, NotFoundError, VeroqError, RateLimitError
 from .shield import shield, ShieldResult
+from .middleware import openai_shield, anthropic_shield, shield_wrap
 from .types import (
     Brief,
     Cluster,
