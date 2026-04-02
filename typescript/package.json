@@ -1,7 +1,8 @@
 {
   "name": "polaris-news-api",
-  "version": "0.9.0",
-  "description": "Official TypeScript SDK for The Polaris Report Knowledge API — real-time news intelligence for AI agents and applications.",
+  "version": "0.9.1",
+  "description": "DEPRECATED — use @veroq/sdk instead. TypeScript SDK for The Polaris Report Knowledge API.",
+  "deprecated": "This package has been renamed to @veroq/sdk. Please install @veroq/sdk instead.",
   "type": "module",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",

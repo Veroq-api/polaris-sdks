@@ -1,5 +1,24 @@
 # polaris-news-api
 
+> **DEPRECATED** -- This package has been renamed to [`@veroq/sdk`](https://www.npmjs.com/package/@veroq/sdk). Please migrate:
+>
+> ```bash
+> npm uninstall polaris-news-api
+> npm install @veroq/sdk
+> ```
+>
+> Then update your imports:
+> ```typescript
+> // Before
+> import { PolarisClient } from "polaris-news-api";
+> // After
+> import { VeroqClient } from "@veroq/sdk";
+> // Or keep PolarisClient as a backward-compatible alias:
+> import { PolarisClient } from "@veroq/sdk";
+> ```
+
+---
+
 Official TypeScript SDK for [The Polaris Report](https://thepolarisreport.com) API.
 
 ## Installation

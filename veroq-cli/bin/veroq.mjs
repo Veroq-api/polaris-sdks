@@ -16,6 +16,7 @@
 //   veroq market
 //   veroq news "AI stocks"
 //   veroq verify "Tesla delivered 1.8M vehicles"
+//   veroq test prompts.json --threshold 0.7
 //
 // Auth:
 //   export VEROQ_API_KEY=pr_live_xxx
@@ -37,7 +38,9 @@ const jsonMode = !args.includes("--human");
 const humanMode = args.includes("--human");
 const verbose = args.includes("--verbose") || args.includes("-v");
 const lineageMode = args.includes("--lineage");
-const cleanArgs = args.filter(a => !a.startsWith("--") && !a.startsWith("-v"));
+const thresholdIdx = args.indexOf("--threshold");
+const thresholdArg = thresholdIdx >= 0 ? parseFloat(args[thresholdIdx + 1]) : null;
+const cleanArgs = args.filter((a, i) => !a.startsWith("--") && !a.startsWith("-v") && (thresholdIdx < 0 || i !== thresholdIdx + 1));
 
 if (!command || command === "help" || command === "--help" || command === "-h") {
   printHelp();
@@ -83,6 +86,10 @@ const commands = {
   feedback: cmdFeedback,
   "/feedback": cmdFeedback,
   consolidate: cmdConsolidate,
+  "shield-doc": cmdShieldDoc,
+  "/shield-doc": cmdShieldDoc,
+  test: cmdTest,
+  "/test": cmdTest,
 };
 
 const handler = commands[command];
@@ -390,6 +397,9 @@ COMMANDS
   market                      Market overview + indices
   news <query>                Search intelligence briefs
   search <query>              Alias for news
+  shield-doc <text> [--type]   Verify document text (pdf, transcript, filing)
+  test <file.json>            CI/CD shield — verify AI outputs from a test file
+                              Exits with code 1 if any test fails threshold
 
 OUTPUT
   JSON by default (agent-first). Use --human for formatted output.
@@ -413,6 +423,8 @@ EXAMPLES
   veroq signal MSFT
   veroq compare AAPL MSFT GOOGL --human
   veroq market --human
+  veroq shield-doc "Revenue was $5.2B..." --type filing
+  veroq test veroq-tests.json --threshold 0.7
 
 DOCS
   https://veroq.ai/docs
@@ -435,6 +447,56 @@ async function cmdShield(args) {
       const icon = c.verdict === "supported" ? "✓" : c.verdict === "contradicted" ? "✗" : "?";
       console.log(`  [${icon}] ${c.text}`);
       if (c.correction) console.log(`    → ${c.correction}`);
+      if (c.receipt_id) console.log(`    Receipt: ${c.receipt_id}`);
+    }
+  });
+}
+
+async function cmdShieldDoc(args) {
+  const VALID_TYPES = ["pdf", "transcript", "filing", "article", "report"];
+  let sourceType = "pdf";
+  let textArgs = [];
+
+  // Parse --type flag
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === "--type" && args[i + 1]) {
+      sourceType = args[i + 1].toLowerCase();
+      i++; // skip value
+    } else if (!args[i].startsWith("--")) {
+      textArgs.push(args[i]);
+    }
+  }
+
+  const text = textArgs.join(" ");
+  if (!text) {
+    console.error("Usage: veroq shield-doc <text> [--type pdf|transcript|filing|article|report]");
+    console.error("");
+    console.error("Verify extracted document text. The client extracts text; VeroQ verifies claims.");
+    console.error("  --type    Document type (default: pdf)");
+    process.exit(1);
+  }
+
+  if (!VALID_TYPES.includes(sourceType)) {
+    console.error(`Invalid type: ${sourceType}. Must be one of: ${VALID_TYPES.join(", ")}`);
+    process.exit(1);
+  }
+
+  const data = await api("/api/v1/verify/output", "POST", {
+    text,
+    source: "cli",
+    source_type: sourceType,
+    max_claims: 5,
+  });
+
+  output(data, d => {
+    console.log(`Document type: ${d.source_type || sourceType}`);
+    console.log(`Trust: ${Math.round((d.overall_confidence || 0) * 100)}% | Verdict: ${d.overall_verdict || "unknown"}\n`);
+    console.log(`Claims: ${d.claims_extracted} extracted, ${d.claims_supported || 0} supported, ${d.claims_contradicted || 0} contradicted\n`);
+    if (d.summary) console.log(`  ${d.summary}\n`);
+    for (const c of (d.claims || [])) {
+      const icon = c.verdict === "supported" ? "+" : c.verdict === "contradicted" ? "x" : "?";
+      console.log(`  [${icon}] ${c.text}`);
+      if (c.correction) console.log(`    -> ${c.correction}`);
       if (c.receipt_id) console.log(`    Receipt: ${c.receipt_id}`);
     }
   });
@@ -516,4 +578,109 @@ async function cmdConsolidate(args) {
     if (d.tickers_covered?.length) console.log(`  Tickers: ${d.tickers_covered.join(", ")}`);
     if (d.avg_confidence) console.log(`  Avg confidence: ${d.avg_confidence}`);
   });
+}
+
+// ── CI/CD Shield ──
+
+async function cmdTest(args) {
+  const filePath = args[0];
+  if (!filePath) {
+    console.error("Usage: veroq test <file.json> [--threshold 0.7]");
+    console.error("");
+    console.error("Test file format (JSON):");
+    console.error('  { "threshold": 0.7, "tests": [');
+    console.error('    { "name": "test name", "text": "AI output to verify", "source": "gpt-4o" }');
+    console.error("  ]}");
+    process.exit(1);
+  }
+
+  // Read and parse test file
+  const { readFileSync } = await import("node:fs");
+  const { resolve } = await import("node:path");
+
+  const absPath = resolve(filePath);
+  let raw;
+  try {
+    raw = readFileSync(absPath, "utf-8");
+  } catch (err) {
+    console.error(`Cannot read test file: ${absPath}`);
+    console.error(`  ${err.message}`);
+    process.exit(1);
+  }
+
+  let suite;
+  try {
+    suite = JSON.parse(raw);
+  } catch (err) {
+    console.error(`Cannot parse test file as JSON: ${err.message}`);
+    process.exit(1);
+  }
+
+  const tests = suite.tests || [];
+  if (tests.length === 0) {
+    console.error("No tests found in file. Expected { tests: [...] }");
+    process.exit(1);
+  }
+
+  // Threshold: CLI flag > file-level > default 0.7
+  const threshold = thresholdArg ?? suite.threshold ?? 0.7;
+
+  console.log(`\nVeroQ Shield Test — ${tests.length} test(s), threshold: ${threshold}\n`);
+
+  let passed = 0;
+  let failed = 0;
+  const results = [];
+
+  for (const t of tests) {
+    const name = t.name || t.text?.slice(0, 40) || "unnamed";
+    const text = t.text;
+    if (!text) {
+      console.log(`  SKIP  ${name} (no text)`);
+      continue;
+    }
+
+    try {
+      const data = await api("/api/v1/verify/output", "POST", {
+        text,
+        source: t.source || "ci",
+        max_claims: t.max_claims || 10,
+      });
+
+      const trust = data.overall_confidence || 0;
+      const verdict = data.overall_verdict || "unknown";
+      const pass = trust >= threshold;
+
+      if (pass) {
+        passed++;
+        console.log(`  PASS  ${name}  (trust: ${(trust * 100).toFixed(0)}%, verdict: ${verdict})`);
+      } else {
+        failed++;
+        console.log(`  FAIL  ${name}  (trust: ${(trust * 100).toFixed(0)}%, verdict: ${verdict}, threshold: ${(threshold * 100).toFixed(0)}%)`);
+        // Show claim-level detail on failure
+        for (const c of (data.claims || [])) {
+          const icon = c.verdict === "supported" ? "+" : c.verdict === "contradicted" ? "x" : "?";
+          console.log(`        [${icon}] ${c.text}`);
+          if (c.correction) console.log(`            -> ${c.correction}`);
+        }
+      }
+
+      results.push({ name, trust, verdict, pass, claims: data.claims_extracted || 0, credits: data.credits_used || 0 });
+    } catch (err) {
+      failed++;
+      console.log(`  FAIL  ${name}  (error: ${err.message})`);
+      results.push({ name, trust: 0, verdict: "error", pass: false, error: err.message });
+    }
+  }
+
+  // Summary
+  const totalCredits = results.reduce((s, r) => s + (r.credits || 0), 0);
+  console.log(`\n${passed + failed} tests: ${passed} passed, ${failed} failed | Credits used: ${totalCredits}\n`);
+
+  // JSON output for CI parsing
+  if (jsonMode) {
+    console.log(JSON.stringify({ threshold, total: passed + failed, passed, failed, results }, null, 2));
+  }
+
+  // Exit with code 1 if any test failed — breaks CI pipeline
+  if (failed > 0) process.exit(1);
 }

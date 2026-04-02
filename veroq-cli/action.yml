@@ -1,0 +1,42 @@
+name: 'VeroQ Shield Test'
+description: 'Verify AI outputs in your CI pipeline. Runs a test suite through VeroQ verified intelligence and fails if any output falls below the trust threshold.'
+author: 'VeroQ'
+
+branding:
+  icon: 'shield'
+  color: 'blue'
+
+inputs:
+  api-key:
+    description: 'VeroQ API key (get one at https://veroq.dev/pricing)'
+    required: true
+  test-file:
+    description: 'Path to test file (JSON)'
+    required: true
+    default: 'veroq-tests.json'
+  threshold:
+    description: 'Minimum trust score (0-1). Tests scoring below this fail.'
+    required: false
+    default: '0.7'
+  node-version:
+    description: 'Node.js version to use'
+    required: false
+    default: '20'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - name: Install VeroQ CLI
+      shell: bash
+      run: npm install -g @veroq/cli
+
+    - name: Run VeroQ Shield Tests
+      shell: bash
+      run: veroq test ${{ inputs.test-file }} --threshold ${{ inputs.threshold }}
+      env:
+        VEROQ_API_KEY: ${{ inputs.api-key }}

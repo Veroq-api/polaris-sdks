@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "polaris-news"
-version = "0.8.0"
-description = "Official Python SDK for The Polaris Report Knowledge API — real-time news intelligence for AI agents and applications."
+version = "0.9.0"
+description = "[DEPRECATED — use 'veroq' instead] Official Python SDK for The Polaris Report Knowledge API."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.8"

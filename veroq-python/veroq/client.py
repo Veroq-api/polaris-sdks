@@ -222,7 +222,7 @@ class VeroqClient:
                     pass
                 current_event = ""
 
-    def verify_output(self, text, source=None, max_claims=5):
+    def verify_output(self, text, source=None, max_claims=5, source_type=None):
         """Verify any LLM output — extracts claims and fact-checks each one.
 
         The trust layer for all AI output. Pass any text from any LLM and get
@@ -232,16 +232,43 @@ class VeroqClient:
             text: Raw LLM output text (20-10000 chars).
             source: Optional source identifier (e.g., "gpt-4o", "claude-3").
             max_claims: Max claims to extract and verify (1-10, default 5).
+            source_type: Optional document type ("llm", "pdf", "transcript",
+                "filing", "article", "report"). Defaults to "llm".
 
         Returns:
-            dict with claims[], overall_confidence, overall_verdict, summary.
+            dict with claims[], overall_confidence, overall_verdict, summary, source_type.
         """
         body = {"text": text}
         if source:
             body["source"] = source
         if max_claims != 5:
             body["max_claims"] = max_claims
+        if source_type:
+            body["source_type"] = source_type
         return self._request("POST", "/api/v1/verify/output", json_body=body)
+
+    def verify_document(self, text, source_type="pdf", source=None, max_claims=5):
+        """Verify a document (PDF, transcript, filing, etc.).
+
+        Thin wrapper around verify_output with source_type pre-set.
+        The client extracts text from the document; VeroQ verifies the claims.
+
+        Args:
+            text: Extracted document text (20-10000 chars).
+            source_type: Document type — "pdf", "transcript", "filing",
+                "article", or "report". Defaults to "pdf".
+            source: Optional source identifier.
+            max_claims: Max claims to extract and verify (1-10, default 5).
+
+        Returns:
+            dict with claims[], overall_confidence, overall_verdict, summary, source_type.
+        """
+        return self.verify_output(
+            text,
+            source=source,
+            max_claims=max_claims,
+            source_type=source_type,
+        )
 
     # -- Feed & Search --
 

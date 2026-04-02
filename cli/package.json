@@ -1,0 +1,20 @@
+{
+  "name": "@polaris-news/cli",
+  "version": "1.0.1",
+  "description": "Financial intelligence from your terminal. The trust layer for AI agents.",
+  "bin": {
+    "polaris": "./bin/polaris.mjs"
+  },
+  "type": "module",
+  "keywords": ["polaris", "financial", "ai", "agent", "cli", "trading", "stocks", "market", "intelligence"],
+  "author": "Polaris API",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Polaris-API/polaris-cli"
+  },
+  "homepage": "https://thepolarisreport.com",
+  "engines": {
+    "node": ">=18"
+  }
+}
