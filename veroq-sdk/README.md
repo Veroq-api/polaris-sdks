@@ -118,17 +118,49 @@ const trail = client.getAuditTrail("trading-session-001");
 | **Continuous improvement** | Feedback loop with web search fallback fills data gaps over time |
 | **Multi-domain** | Finance (flagship), legal, research, compliance, custom verticals |
 
+## Cached Shield — High-Volume Pipelines
+
+```typescript
+import { CachedShield } from "@veroq/sdk";
+
+const cached = new CachedShield({ maxCache: 1000, ttlMs: 3_600_000 });
+const r1 = await cached.shield("NVIDIA reported $22B in Q4 revenue"); // API call
+const r2 = await cached.shield("NVIDIA reported $22B in Q4 revenue"); // instant, 0 credits
+console.log(cached.stats()); // { hits: 1, misses: 1, hitRate: 0.5, size: 1 }
+```
+
+## Agent Monitoring
+
+```typescript
+// Set up autonomous monitoring
+await client.agentAutoMonitor("my-bot", { trustThreshold: 0.7, checkIntervalHours: 6 });
+
+// Manual health check
+const health = await client.agentHealthCheck("my-bot");
+console.log(health.health.status);      // "healthy" or "degraded"
+console.log(health.health.trustTrend);  // "improving" / "declining" / "stable"
+```
+
 ## All Methods
 
 | Method | Description |
 |--------|-------------|
+| `shield(text)` | Verify any LLM output (module-level) |
+| `CachedShield` | Local LRU cache for high-volume shield calls |
 | `ask(question)` | Ask any financial question |
 | `askStream(question)` | Stream via SSE |
 | `verify(claim)` | Fact-check with evidence chain |
+| `verifyOutput(text)` | Extract + verify claims from any text |
 | `createVerifiedSwarm(query, options)` | Multi-agent verified pipeline |
 | `createRuntime(query, options)` | Domain-specific runtime |
 | `callExternalTool(serverId, tool, params)` | Secure external tool proxy |
 | `submitFeedback(feedback)` | Self-improvement feedback |
+| `memoryStore(agentId, key, value)` | Store agent memory |
+| `memoryRecall(agentId)` | Recall agent memories |
+| `memoryList(agentId)` | List all agent memories |
+| `agentAutoMonitor(agentId)` | Configure autonomous monitoring |
+| `agentHealthCheck(agentId)` | Trigger health check |
+| `watch(options)` | Real-time SSE verification stream |
 | `configureEnterprise(config)` | Enterprise governance |
 | `getDecisionLineage(tool, input, output)` | Decision audit |
 | `getAuditTrail(sessionId?)` | Audit trail |
