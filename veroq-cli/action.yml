@@ -37,6 +37,6 @@ runs:
 
     - name: Run VeroQ Shield Tests
       shell: bash
-      run: veroq test ${{ inputs.test-file }} --threshold ${{ inputs.threshold }}
+      run: veroq test "${{ inputs.test-file }}" --threshold "${{ inputs.threshold }}"
       env:
         VEROQ_API_KEY: ${{ inputs.api-key }}

@@ -99,7 +99,8 @@ if (!handler) {
   process.exit(1);
 }
 
-handler(cleanArgs.slice(1)).catch(err => {
+// Pass full args (not cleanArgs) so commands can parse their own --flags
+handler(args.slice(1)).catch(err => {
   console.error(`Error: ${err.message}`);
   process.exit(1);
 });
