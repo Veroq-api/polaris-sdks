@@ -30,7 +30,7 @@ prompt = ChatPromptTemplate.from_messages([
     ("placeholder", "{agent_scratchpad}"),
 ])
 
-llm = ChatOpenAI(model="gpt-4o")
+llm = ChatOpenAI(model="gpt-5.4")
 agent = create_openai_tools_agent(llm, tools, prompt)
 executor = AgentExecutor(agent=agent, tools=tools)
 
@@ -61,7 +61,7 @@ prompt = ChatPromptTemplate.from_template(
 chain = (
     {"context": retriever, "question": RunnablePassthrough()}
     | prompt
-    | ChatOpenAI(model="gpt-4o")
+    | ChatOpenAI(model="gpt-5.4")
     | StrOutputParser()
 )
 

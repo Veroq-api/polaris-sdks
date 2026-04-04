@@ -1236,6 +1236,52 @@ export class VeroqClient {
     });
   }
 
+  // -- Knowledge Base --
+
+  /** Upload a document to the knowledge base for private verification context. */
+  async knowledgeUpload(content: string, filename: string, options?: {
+    agentId?: string;
+    title?: string;
+    description?: string;
+    tags?: string[];
+  }): Promise<Record<string, any>> {
+    const body: Record<string, unknown> = { content, filename };
+    if (options?.agentId) body.agent_id = options.agentId;
+    if (options?.title) body.title = options.title;
+    if (options?.description) body.description = options.description;
+    if (options?.tags) body.tags = options.tags;
+    return this.request<Record<string, any>>("POST", "/api/v1/knowledge/upload", undefined, body);
+  }
+
+  /** Search the knowledge base using full-text search. Returns ranked chunks. */
+  async knowledgeSearch(query: string, options?: {
+    agentId?: string;
+    limit?: number;
+  }): Promise<Record<string, any>> {
+    const params: Record<string, unknown> = { q: query };
+    if (options?.agentId) params.agent_id = options.agentId;
+    if (options?.limit !== undefined) params.limit = options.limit;
+    return this.request<Record<string, any>>("GET", "/api/v1/knowledge/search", params);
+  }
+
+  /** List knowledge base documents. */
+  async knowledgeList(options?: {
+    agentId?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<Record<string, any>> {
+    const params: Record<string, unknown> = {};
+    if (options?.agentId) params.agent_id = options.agentId;
+    if (options?.limit !== undefined) params.limit = options.limit;
+    if (options?.offset !== undefined) params.offset = options.offset;
+    return this.request<Record<string, any>>("GET", "/api/v1/knowledge/documents", params);
+  }
+
+  /** Delete a knowledge base document and its chunks. */
+  async knowledgeDelete(documentId: string): Promise<Record<string, any>> {
+    return this.request<Record<string, any>>("DELETE", `/api/v1/knowledge/documents/${encodeURIComponent(documentId)}`);
+  }
+
   stream(options: StreamOptions = {}): { start: (onBrief: (brief: Brief) => void, onError?: (error: Error) => void) => void; stop: () => void } {
     let controller: AbortController | null = null;
 

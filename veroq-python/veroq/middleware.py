@@ -8,7 +8,7 @@ Usage:
     # OpenAI wrapper — swap one import
     from veroq.middleware import openai_shield
     client = openai_shield(openai.OpenAI())
-    response = client.chat.completions.create(model="gpt-4o", messages=[...])
+    response = client.chat.completions.create(model="gpt-5.4", messages=[...])
     # response now has .veroq_shield with trust_score, corrections, receipts
 
     # Any LLM wrapper
@@ -47,7 +47,7 @@ def openai_shield(client, source="openai", agent_id=None, max_claims=5):
 
         client = openai_shield(openai.OpenAI())
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-5.4",
             messages=[{"role": "user", "content": "What's NVIDIA's revenue?"}]
         )
         # Access original response normally

@@ -16,7 +16,7 @@ import { openai } from "@ai-sdk/openai";
 import { polarisSearch, polarisFeed } from "@polaris-news/ai";
 
 const result = await generateText({
-  model: openai("gpt-4o"),
+  model: openai("gpt-5.4"),
   tools: {
     searchNews: polarisSearch({ apiKey: "your-api-key" }),
     getLatest: polarisFeed({ apiKey: "your-api-key" }),
@@ -29,7 +29,7 @@ If you've run `polaris login` or set `POLARIS_API_KEY`, you can omit the `apiKey
 
 ```typescript
 const result = await generateText({
-  model: openai("gpt-4o"),
+  model: openai("gpt-5.4"),
   tools: {
     searchNews: polarisSearch(),
     getLatest: polarisFeed(),

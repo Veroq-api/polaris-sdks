@@ -11,7 +11,7 @@ Usage:
     print(result.corrections)       # list of corrections
 
     # Wrap any LLM call
-    response = openai.chat.completions.create(model="gpt-4o", messages=[...])
+    response = openai.chat.completions.create(model="gpt-5.4", messages=[...])
     verified = shield(response.choices[0].message.content)
 
     # With config
@@ -109,7 +109,7 @@ def shield(text, source=None, agent_id=None, max_claims=5, api_key=None, base_ur
 
     Args:
         text: The LLM output to verify (string, 20-10000 chars).
-        source: Optional source identifier (e.g., "gpt-4o", "claude-3").
+        source: Optional source identifier (e.g., "gpt-5.4", "claude-sonnet-4.6").
         agent_id: Optional agent ID for memory integration.
         max_claims: Max claims to extract and verify (1-10, default 5).
         api_key: Optional API key override.

@@ -22,7 +22,7 @@ import { VeroqClient } from "./client.js";
 import { VeroqError } from "./errors.js";
 
 export interface ShieldOptions {
-  /** Source identifier (e.g., "gpt-4o", "claude-3") */
+  /** Source identifier (e.g., "gpt-5.4", "claude-sonnet-4.6") */
   source?: string;
   /** Agent ID for memory integration */
   agentId?: string;
@@ -154,7 +154,7 @@ function getClient(apiKey?: string, baseUrl?: string): VeroqClient {
  *
  * // With options
  * const result = await shield(llmOutput, {
- *   source: "gpt-4o",
+ *   source: "gpt-5.4",
  *   agentId: "my-bot",
  *   blockIfUntrusted: true,
  * });

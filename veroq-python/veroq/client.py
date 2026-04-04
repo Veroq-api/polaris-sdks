@@ -280,7 +280,7 @@ class VeroqClient:
 
         Args:
             text: Raw LLM output text (20-10000 chars).
-            source: Optional source identifier (e.g., "gpt-4o", "claude-3").
+            source: Optional source identifier (e.g., "gpt-5.4", "claude-sonnet-4.6").
             max_claims: Max claims to extract and verify (1-10, default 5).
             source_type: Optional document type ("llm", "pdf", "transcript",
                 "filing", "article", "report"). Defaults to "llm".
@@ -1190,6 +1190,82 @@ class VeroqClient:
         if params:
             body["params"] = params
         return self._request("POST", "/api/v1/external/call", json_body=body)
+
+    # -- Knowledge Base --
+
+    def knowledge_upload(self, content, filename, agent_id=None, title=None, description=None, tags=None):
+        """Upload a document to the knowledge base.
+
+        Documents are chunked and indexed for full-text search. Use this to
+        build a private knowledge base that Shield, /ask, and Swarm can
+        verify against.
+
+        Args:
+            content: Document text content.
+            filename: Original filename (e.g., "policy.pdf", "handbook.md").
+            agent_id: Optional agent ID to scope the document to.
+            title: Optional document title.
+            description: Optional description.
+            tags: Optional list of tags for categorization.
+
+        Returns:
+            dict with document_id, chunks_created, status.
+        """
+        body = {"content": content, "filename": filename}
+        if agent_id:
+            body["agent_id"] = agent_id
+        if title:
+            body["title"] = title
+        if description:
+            body["description"] = description
+        if tags:
+            body["tags"] = tags
+        return self._request("POST", "/api/v1/knowledge/upload", json_body=body)
+
+    def knowledge_search(self, query, agent_id=None, limit=10):
+        """Search the knowledge base using full-text search.
+
+        Returns ranked chunks from your uploaded documents matching the query.
+
+        Args:
+            query: Search query string.
+            agent_id: Optional agent ID to scope the search to.
+            limit: Max results (1-50, default 10).
+
+        Returns:
+            dict with chunks[] containing content, heading, document_id, filename, score.
+        """
+        params = {"q": query, "limit": limit}
+        if agent_id:
+            params["agent_id"] = agent_id
+        return self._request("GET", "/api/v1/knowledge/search", params=params)
+
+    def knowledge_list(self, agent_id=None, limit=50, offset=0):
+        """List knowledge base documents.
+
+        Args:
+            agent_id: Optional agent ID to filter by.
+            limit: Max results (default 50).
+            offset: Pagination offset (default 0).
+
+        Returns:
+            dict with documents[] and total count.
+        """
+        params = {"limit": limit, "offset": offset}
+        if agent_id:
+            params["agent_id"] = agent_id
+        return self._request("GET", "/api/v1/knowledge/documents", params=params)
+
+    def knowledge_delete(self, document_id):
+        """Delete a knowledge base document and its chunks.
+
+        Args:
+            document_id: The document ID to delete.
+
+        Returns:
+            dict with status confirmation.
+        """
+        return self._request("DELETE", "/api/v1/knowledge/documents/{}".format(document_id))
 
     def submit_feedback(self, session_id, query, reason, detail, claims=None, enterprise_id=None):
         """Submit feedback to the self-improvement loop.

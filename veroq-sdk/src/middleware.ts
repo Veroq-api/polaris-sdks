@@ -8,7 +8,7 @@
  *
  * const client = shieldOpenAI(new OpenAI());
  * const response = await client.chat.completions.create({
- *   model: "gpt-4o",
+ *   model: "gpt-5.4",
  *   messages: [{ role: "user", content: "What's NVIDIA's revenue?" }],
  * });
  * console.log(response.choices[0].message.content);

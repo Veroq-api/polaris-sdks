@@ -595,7 +595,7 @@ async function cmdTest(args) {
     console.error("");
     console.error("Test file format (JSON):");
     console.error('  { "threshold": 0.7, "tests": [');
-    console.error('    { "name": "test name", "text": "AI output to verify", "source": "gpt-4o" }');
+    console.error('    { "name": "test name", "text": "AI output to verify", "source": "gpt-5.4" }');
     console.error("  ]}");
     process.exit(1);
   }
